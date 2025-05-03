@@ -1,0 +1,138 @@
+To upgrade your Replit Streamlit app UI from the default minimal layout (as seen in your screenshot) to a more professional, visually rich, and domain-specific interface, here are key design improvements and implementation steps:
+
+⸻
+
+1. Professional Header Section
+
+Replace the basic Streamlit title with a styled banner using st.markdown() and CSS.
+
+st.markdown("""
+    <style>
+    .title-box {
+        background-color: #1f3b4d;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        color: white;
+        font-size: 26px;
+        font-weight: bold;
+        text-align: center;
+    }
+    </style>
+    <div class='title-box'>
+        MCP智能分析系统 · 上海期货黄金合约（AU）与国际金价联动研究
+    </div>
+""", unsafe_allow_html=True)
+
+
+
+⸻
+
+2. Custom Sidebar Enhancements
+
+Add logos, dropdowns, and better styling in the sidebar for data control:
+
+st.sidebar.image("your_logo.png", width=120)
+st.sidebar.markdown("## 数据控制面板")
+
+market = st.sidebar.selectbox("选择市场", ["沪金主力合约", "COMEX GC", "XAU/USD"])
+start_date = st.sidebar.date_input("开始日期")
+end_date = st.sidebar.date_input("结束日期")
+freq = st.sidebar.radio("频率", ["1分钟", "5分钟", "Tick"])
+
+
+
+⸻
+
+3. Tab Styling & Icons
+
+Enhance the tab layout using Streamlit’s option_menu from streamlit_option_menu:
+
+pip install streamlit-option-menu
+
+from streamlit_option_menu import option_menu
+
+selected = option_menu(
+    menu_title=None,
+    options=["数据分析", "技术指标", "信号图谱", "策略回测"],
+    icons=["bar-chart", "activity", "graph-up", "cpu"],
+    orientation="horizontal",
+)
+
+
+
+⸻
+
+4. Modern Charts with Plotly or ECharts
+
+Replace basic Matplotlib with Plotly for interactive charts:
+
+import plotly.graph_objects as go
+
+fig = go.Figure()
+fig.add_trace(go.Candlestick(
+    x=df['datetime'],
+    open=df['open'],
+    high=df['high'],
+    low=df['low'],
+    close=df['close'],
+    name='K线'
+))
+fig.update_layout(title="沪金主力合约K线图", xaxis_rangeslider_visible=False)
+st.plotly_chart(fig, use_container_width=True)
+
+
+
+⸻
+
+5. Signal Map Example with Color Timeline
+
+Add a visual signal map:
+
+import altair as alt
+
+chart = alt.Chart(signal_df).mark_bar().encode(
+    x='time:T',
+    y=alt.value(20),
+    color=alt.condition(
+        alt.datum.signal == 'Buy', 
+        alt.value('green'),
+        alt.value('red')
+    )
+)
+st.altair_chart(chart, use_container_width=True)
+
+
+
+⸻
+
+6. Polished Report Output Area
+
+Add a PDF viewer or download button with file validation:
+
+with open("reports/sample.pdf", "rb") as f:
+    base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+    pdf_display = f'<iframe src="data:application/pdf;base64,{base64_pdf}" width="100%" height="800px" type="application/pdf"></iframe>'
+    st.markdown(pdf_display, unsafe_allow_html=True)
+
+
+
+⸻
+
+7. Add Footer or Branding
+
+st.markdown("""
+    <hr style="border:1px solid #ddd;">
+    <div style="text-align:center; color: #888;">
+    Powered by YiM · Designed with AI & Quant Vision
+    </div>
+""", unsafe_allow_html=True)
+
+
+
+⸻
+
+Would you like me to:
+	1.	Generate a pre-built app.py file with all these upgrades for direct copy-paste?
+	2.	Create a GitHub template or Replit project link with this layout preconfigured?
+
+Let me know your preference and whether you have a custom logo you’d like embedded.

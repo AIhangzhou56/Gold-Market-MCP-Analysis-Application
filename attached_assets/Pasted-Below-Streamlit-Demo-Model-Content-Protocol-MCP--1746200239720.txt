@@ -1,0 +1,200 @@
+Below是一套整装升级方案，把现有的 Streamlit Demo 界面改造成真正体现
+Model Content Protocol (MCP) 研究能力的 专业量化分析工作台。
+全部示例代码都可直接复制到 app.py 或拆分到 /pages/….
+
+⸻
+
+1 · 整体页面信息架构（IA）
+
+区域	作用	Streamlit 实现要点
+A. 顶部固定导航栏	LOGO + 全局导航（Data Lab / MCP Signals / Strategy / Reports / Settings）	hydralit_components.NavBar 或 streamlit-option-menu
+B. 侧边浮动控制栏（动态）	日期范围、市场选择、频率、指标开关、运行按钮	st.sidebar + CSS position fixed
+C. 主工作区 (Tab)	① 仪表盘② MCP 信号谱③ 策略回测&优化④ 报告中心	st.tabs([…]) or multi‑page
+D. 全局消息/进度 Toast	数据加载进度、错误提示	st.toast (< v1.33) 或 st.notification
+E. 页脚	版权/版本号/联系我们	自定义 HTML footer
+
+
+
+⸻
+
+2 · 配色 & 字体方案
+
+st.markdown("""
+<style>
+:root {
+  --primary: #004e89;      /* 深海蓝 */
+  --secondary: #ffc745;    /* MCP 金 */
+  --bg: #f6f9fc;
+  --font-sans: 'Inter', sans-serif;
+}
+html, body, [class*="st-"] {
+  font-family: var(--font-sans);
+}
+[data-baseweb="tab"] button {
+  font-weight: 600;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
+
+⸻
+
+3 · 顶栏导航示例（Hydralit Components）
+
+from hydralit_components import NavBar, NavItem
+
+NavBar(
+    items=[
+        NavItem("Data Lab",     icon="database"),
+        NavItem("MCP Signals",  icon="activity"),
+        NavItem("Strategy",     icon="cpu"),
+        NavItem("Reports",      icon="file-earmark-richtext"),
+        NavItem("Settings",     icon="gear")
+    ],
+    home_name=False,
+    hide_streamlit_markers=True,
+    sticky="top",
+    bg_color="var(--primary)",
+    font_color="white",
+    active_font_color="var(--secondary)",
+)
+
+
+
+⸻
+
+4 · 侧边控制栏进阶
+
+with st.sidebar:
+    st.image("static/mcp_logo.png", width=140)
+    st.markdown("### 数据控制面板")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        start = st.date_input("起始", value=st.session_state.get("start_date"))
+    with col2:
+        end   = st.date_input("结束", value=st.session_state.get("end_date"))
+    
+    freq = st.select_slider("频率", ["Tick", "1分钟", "5分钟", "15分钟"])
+    
+    markets = st.multiselect(
+        "市场",
+        ["AU 主力", "COMEX GC", "XAU/USD"],
+        default=["AU 主力","COMEX GC","XAU/USD"]
+    )
+    
+    factors = st.multiselect(
+        "MCP 因子",
+        ["MACD", "VWAP", "主动买盘占比", "盘口深度", "持仓Δ"],
+        default=["MACD","VWAP"]
+    )
+    
+    if st.button("🚀 运行分析", use_container_width=True):
+        run_analysis(start, end, freq, markets, factors)
+
+
+
+⸻
+
+5 · 仪表盘页 (Data Lab)
+
+tab_price, tab_kpi = st.tabs(["📈 价格&技术线", "📊 核心 KPI"])
+
+with tab_price:
+    from plotly.subplots import make_subplots
+    import plotly.graph_objects as go
+    
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
+                        row_heights=[0.7, 0.3],
+                        vertical_spacing=0.02)
+    # K 线
+    fig.add_trace(
+        go.Candlestick(
+            x=df.index, open=df.open, high=df.high,
+            low=df.low, close=df.close, name="AU K线"),
+        row=1, col=1
+    )
+    # VWAP
+    fig.add_trace(go.Scatter(x=df.index, y=df.vwap, name="VWAP", line=dict(width=1)), row=1, col=1)
+    # 成交量
+    fig.add_trace(go.Bar(x=df.index, y=df.volume, name="Volume"), row=2, col=1)
+    
+    fig.update_layout(height=600, template="simple_white")
+    st.plotly_chart(fig, use_container_width=True)
+
+with tab_kpi:
+    col1, col2, col3 = st.columns(3)
+    col1.metric("今日波动率", f"{vol_today:.2%}", delta=f"{vol_today/daily_avg_vol-1:.1%}")
+    col2.metric("主动买盘占比", f"{buy_ratio_today:.1%}")
+    col3.metric("持仓 Δ", f"{oi_delta_today:+,}")
+
+
+
+⸻
+
+6 · MCP 信号谱 (自定义热图时间轴)
+
+import altair as alt
+
+signal_chart = alt.Chart(signal_df).mark_rect().encode(
+    x='minute:T',
+    y='factor:N',                         # MACD / VWAP / Flow ...
+    color=alt.Color('score:Q', scale=alt.Scale(scheme='viridis')),
+    tooltip=['minute', 'factor', 'score']
+).properties(height=300)
+
+st.altair_chart(signal_chart, use_container_width=True)
+
+
+
+⸻
+
+7 · 策略回测 & 优化
+	•	滑块实时调节 MACD / VWAP 参数 → vectorbt 快速重算
+	•	展示 Equity Curve, Drawdown, 交易统计表 (st.dataframe)
+	•	st.download_button 导出交易列表 CSV
+
+⸻
+
+8 · 报告中心
+
+report_files = glob.glob("reports/*.pdf")
+report_files.sort(reverse=True)
+
+for rp in report_files:
+    with st.expander(Path(rp).stem):
+        with open(rp, "rb") as f:
+            st.download_button("下载 PDF", data=f, file_name=Path(rp).name)
+
+
+
+⸻
+
+9 · MCP 能力增强点
+
+功能	具体实现 & UI 元素
+实时信号推送	st_autorefresh + st.toast 推送“⚡ BUY @ 470.12”
+因子可解释性	点击信号点弹出 st.modal，列出因子值、阈值、触发原因
+多模型对比	Tab 内用 st.selectbox("模型版本") 自动切换策略参数集
+批量报告	选中多个交易日 → st.progress 批量生成 PDF 并打包 zip
+
+
+
+⸻
+
+10 · 快速集成指南
+	1.	安装 UI 依赖
+
+pip install streamlit-option-menu hydralit-components plotly altair
+
+
+	2.	将示例代码片段 合并进 app.py
+	3.	在 Replit ⟶ Secrets 里维护 API_Key & theme variables
+	4.	点 Run，界面即升级完成 ✔️
+
+⸻
+
+需要我为你 直接生成完整的 app.py 新版本、或推送到 GitHub Starter Repo 吗？
+
+回复 “生成新 app” 或 “推送 GitHub” 即可。

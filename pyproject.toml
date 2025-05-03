@@ -1,0 +1,24 @@
+[project]
+name = "repl-nix-workspace"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.11"
+dependencies = [
+    "beautifulsoup4>=4.13.4",
+    "jinja2>=3.1.6",
+    "matplotlib>=3.10.1",
+    "numpy>=2.2.5",
+    "pandas>=2.2.3",
+    "pdfkit>=1.0.0",
+    "plotly>=6.0.1",
+    "requests>=2.32.3",
+    "scipy>=1.15.2",
+    "streamlit-option-menu>=0.4.0",
+    "streamlit>=1.45.0",
+    "tushare>=1.4.21",
+    "yfinance>=0.2.57",
+    "psycopg2-binary>=2.9.10",
+    "sqlalchemy>=2.0.40",
+    "altair>=5.5.0",
+    "hydralit-components>=1.0.10",
+]

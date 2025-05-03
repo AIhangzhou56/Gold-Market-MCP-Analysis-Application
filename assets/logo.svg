@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .mcp-logo {
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+    }
+    .gold {
+      fill: #ffc745;
+    }
+    .primary {
+      fill: #004e89;
+    }
+    .chart-line {
+      stroke: #004e89;
+      stroke-width: 2;
+      fill: none;
+    }
+    .signal {
+      fill: #e74c3c;
+    }
+  </style>
+  
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="55" fill="white" stroke="#004e89" stroke-width="2"/>
+  
+  <!-- Chart lines -->
+  <path class="chart-line" d="M20,80 Q30,50 40,70 T60,60 T80,40 T100,20"/>
+  
+  <!-- Gold bar symbol -->
+  <rect class="gold" x="25" y="85" width="30" height="10" rx="2"/>
+  <rect class="gold" x="65" y="85" width="30" height="10" rx="2"/>
+  
+  <!-- MCP text -->
+  <text x="60" y="60" class="mcp-logo primary" text-anchor="middle" font-size="24">MCP</text>
+  
+  <!-- Signal points -->
+  <circle class="signal" cx="40" cy="70" r="3"/>
+  <circle class="signal" cx="60" cy="60" r="3"/>
+  <circle class="signal" cx="80" cy="40" r="3"/>
+  
+  <!-- Smaller text -->
+  <text x="60" y="110" class="primary" text-anchor="middle" font-size="10">金融信号智能系统</text>
+</svg>
